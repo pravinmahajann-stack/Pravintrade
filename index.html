@@ -1,0 +1,1366 @@
+<!DOCTYPE html>
+<html lang="mr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="PravTrade">
+<meta name="theme-color" content="#0a0f1e">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Pravin Trading Dashboard</title>
+<style>
+  :root {
+    --bg: #0a0f1e;
+    --bg2: #111827;
+    --bg3: #1a2236;
+    --gold: #f59e0b;
+    --gold2: #fbbf24;
+    --green: #10b981;
+    --red: #ef4444;
+    --blue: #3b82f6;
+    --purple: #8b5cf6;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --border: #1e2d45;
+    --card: #131c2e;
+  }
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html, body { height:100%; overflow:hidden; background:var(--bg); color:var(--text); font-family:'SF Pro Display',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif; }
+
+  /* TOP BAR */
+  .topbar {
+    display:flex; align-items:center; justify-content:space-between;
+    padding:12px 16px 8px;
+    background:linear-gradient(180deg,#0d1629 0%,var(--bg) 100%);
+    border-bottom:1px solid var(--border);
+    position:relative; z-index:10;
+  }
+  .topbar-logo { display:flex; align-items:center; gap:8px; }
+  .logo-icon { width:32px; height:32px; border-radius:8px; background:linear-gradient(135deg,#f59e0b,#d97706); display:flex; align-items:center; justify-content:center; font-size:16px; font-weight:900; color:#000; }
+  .logo-text { font-size:14px; font-weight:700; color:var(--gold); letter-spacing:0.5px; }
+  .logo-sub { font-size:10px; color:var(--muted); margin-top:1px; }
+  .topbar-time { text-align:right; }
+  .time-display { font-size:18px; font-weight:700; color:var(--text); font-variant-numeric:tabular-nums; }
+  .date-display { font-size:10px; color:var(--muted); }
+
+  /* WINDOW STATUS */
+  .window-bar {
+    display:flex; gap:6px; padding:6px 16px;
+    background:var(--bg); border-bottom:1px solid var(--border);
+    overflow-x:auto; scrollbar-width:none;
+  }
+  .window-bar::-webkit-scrollbar { display:none; }
+  .win-chip {
+    flex-shrink:0; padding:4px 10px; border-radius:20px; font-size:11px; font-weight:600;
+    border:1px solid; display:flex; align-items:center; gap:4px;
+  }
+  .win-chip.active { background:#10b98120; border-color:#10b981; color:#10b981; }
+  .win-chip.inactive { background:#1e2d45; border-color:var(--border); color:var(--muted); }
+  .win-chip.warning { background:#f59e0b20; border-color:#f59e0b; color:#f59e0b; }
+  .win-dot { width:6px; height:6px; border-radius:50%; background:currentColor; }
+
+  /* TAB NAV */
+  .tabnav {
+    display:flex; overflow-x:auto; scrollbar-width:none;
+    background:var(--bg2); border-bottom:1px solid var(--border);
+  }
+  .tabnav::-webkit-scrollbar { display:none; }
+  .tab-btn {
+    flex-shrink:0; padding:10px 14px; font-size:11px; font-weight:600;
+    color:var(--muted); background:none; border:none; cursor:pointer;
+    border-bottom:2px solid transparent; white-space:nowrap; transition:all 0.2s;
+    display:flex; align-items:center; gap:5px;
+  }
+  .tab-btn.active { color:var(--gold); border-bottom-color:var(--gold); background:#f59e0b0a; }
+
+  /* SCROLL AREA */
+  .scroll-area {
+    overflow-y:auto; overflow-x:hidden;
+    height:calc(100vh - 180px);
+    padding:12px 14px 80px;
+    -webkit-overflow-scrolling:touch;
+  }
+
+  /* CARDS */
+  .card {
+    background:var(--card); border:1px solid var(--border);
+    border-radius:12px; padding:14px; margin-bottom:10px;
+  }
+  .card-title {
+    font-size:11px; font-weight:700; color:var(--muted);
+    text-transform:uppercase; letter-spacing:0.8px; margin-bottom:10px;
+    display:flex; align-items:center; gap:6px;
+  }
+  .card-title span { font-size:14px; }
+
+  /* METRIC ROW */
+  .metric-row { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+  .metric-row.three { grid-template-columns:1fr 1fr 1fr; }
+  .metric-box {
+    background:var(--bg3); border-radius:8px; padding:10px;
+    border:1px solid var(--border);
+  }
+  .metric-label { font-size:10px; color:var(--muted); margin-bottom:4px; }
+  .metric-value { font-size:16px; font-weight:800; color:var(--text); font-variant-numeric:tabular-nums; }
+  .metric-value.gold { color:var(--gold); }
+  .metric-value.green { color:var(--green); }
+  .metric-value.red { color:var(--red); }
+  .metric-value.blue { color:var(--blue); }
+  .metric-sub { font-size:10px; color:var(--muted); margin-top:2px; }
+
+  /* POSITION CARD */
+  .pos-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  .pos-badge {
+    padding:3px 10px; border-radius:20px; font-size:11px; font-weight:700;
+  }
+  .pos-badge.safe { background:#10b98120; color:#10b981; border:1px solid #10b981; }
+  .pos-badge.watch { background:#f59e0b20; color:#f59e0b; border:1px solid #f59e0b; }
+  .pos-badge.danger { background:#ef444420; color:#ef4444; border:1px solid #ef4444; }
+  .pos-details { font-size:12px; color:var(--text); line-height:1.8; }
+  .pos-details b { color:var(--gold); }
+
+  /* PROGRESS BAR */
+  .progress-wrap { margin:6px 0; }
+  .progress-label { display:flex; justify-content:space-between; font-size:11px; color:var(--muted); margin-bottom:4px; }
+  .progress-bar { height:6px; background:var(--bg3); border-radius:3px; overflow:hidden; }
+  .progress-fill { height:100%; border-radius:3px; transition:width 0.5s; }
+  .progress-fill.gold { background:linear-gradient(90deg,#d97706,#f59e0b); }
+  .progress-fill.green { background:linear-gradient(90deg,#059669,#10b981); }
+  .progress-fill.red { background:linear-gradient(90deg,#dc2626,#ef4444); }
+
+  /* HABIT ITEMS */
+  .habit-item {
+    display:flex; align-items:center; gap:10px;
+    padding:10px; background:var(--bg3); border-radius:8px;
+    margin-bottom:6px; border:1px solid var(--border); cursor:pointer;
+    transition:all 0.2s;
+  }
+  .habit-item.done { border-color:#10b98140; background:#10b98108; }
+  .habit-item.done .habit-text { color:var(--muted); text-decoration:line-through; }
+  .habit-check {
+    width:22px; height:22px; border-radius:6px; border:2px solid var(--border);
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    font-size:12px; transition:all 0.2s;
+  }
+  .habit-item.done .habit-check { background:var(--green); border-color:var(--green); }
+  .habit-text { font-size:13px; color:var(--text); flex:1; }
+  .habit-time { font-size:10px; color:var(--muted); flex-shrink:0; }
+  .habit-score-bar { display:flex; gap:4px; margin:10px 0; }
+  .score-seg { flex:1; height:8px; border-radius:4px; background:var(--bg3); border:1px solid var(--border); transition:all 0.3s; }
+  .score-seg.filled { background:var(--gold); border-color:var(--gold); }
+
+  /* TRADE LOG */
+  .trade-item {
+    padding:10px; background:var(--bg3); border-radius:8px;
+    margin-bottom:6px; border-left:3px solid var(--border);
+  }
+  .trade-item.win { border-left-color:var(--green); }
+  .trade-item.loss { border-left-color:var(--red); }
+  .trade-item.open { border-left-color:var(--gold); }
+  .trade-item.violation { border-left-color:var(--purple); background:#8b5cf608; }
+  .trade-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+  .trade-name { font-size:12px; font-weight:700; color:var(--text); }
+  .trade-pnl { font-size:12px; font-weight:700; }
+  .trade-pnl.pos { color:var(--green); }
+  .trade-pnl.neg { color:var(--red); }
+  .trade-pnl.open { color:var(--gold); }
+  .trade-meta { font-size:10px; color:var(--muted); }
+  .violation-tag { font-size:9px; background:#8b5cf620; color:#a78bfa; padding:2px 6px; border-radius:4px; border:1px solid #8b5cf640; }
+
+  /* FORM INPUTS */
+  .input-group { margin-bottom:10px; }
+  .input-label { font-size:11px; color:var(--muted); margin-bottom:4px; font-weight:600; }
+  .inp {
+    width:100%; background:var(--bg3); border:1px solid var(--border);
+    border-radius:8px; padding:10px 12px; color:var(--text); font-size:13px;
+    outline:none; transition:border-color 0.2s;
+    -webkit-appearance:none;
+  }
+  .inp:focus { border-color:var(--gold); }
+  .inp::placeholder { color:var(--muted); }
+  select.inp { cursor:pointer; }
+
+  /* BUTTONS */
+  .btn {
+    width:100%; padding:12px; border-radius:10px; border:none; cursor:pointer;
+    font-size:14px; font-weight:700; transition:all 0.2s; letter-spacing:0.3px;
+  }
+  .btn-gold { background:linear-gradient(135deg,#d97706,#f59e0b); color:#000; }
+  .btn-gold:active { transform:scale(0.97); }
+  .btn-outline { background:transparent; border:1px solid var(--border); color:var(--muted); }
+  .btn-green { background:linear-gradient(135deg,#059669,#10b981); color:#fff; }
+  .btn-red { background:linear-gradient(135deg,#dc2626,#ef4444); color:#fff; }
+  .btn-sm { padding:8px 14px; font-size:12px; width:auto; border-radius:8px; }
+
+  /* RULES */
+  .rule-item {
+    display:flex; gap:10px; padding:10px;
+    background:var(--bg3); border-radius:8px; margin-bottom:6px;
+    border:1px solid var(--border);
+  }
+  .rule-num { width:24px; height:24px; border-radius:6px; background:var(--gold); color:#000; font-size:11px; font-weight:900; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+  .rule-text { font-size:12px; color:var(--text); line-height:1.5; }
+  .rule-text b { color:var(--gold); }
+
+  /* ALERT LOG */
+  .alert-item {
+    display:flex; gap:8px; padding:8px 10px;
+    border-radius:8px; margin-bottom:5px; font-size:11px;
+    border:1px solid;
+  }
+  .alert-item.info { background:#3b82f610; border-color:#3b82f630; color:#93c5fd; }
+  .alert-item.warn { background:#f59e0b10; border-color:#f59e0b30; color:#fcd34d; }
+  .alert-item.danger { background:#ef444410; border-color:#ef444430; color:#fca5a5; }
+  .alert-item.success { background:#10b98110; border-color:#10b98130; color:#6ee7b7; }
+  .alert-time { color:var(--muted); flex-shrink:0; }
+
+  /* EQUITY ROW */
+  .eq-item {
+    display:flex; justify-content:space-between; align-items:center;
+    padding:10px 12px; background:var(--bg3); border-radius:8px;
+    margin-bottom:6px; border:1px solid var(--border);
+  }
+  .eq-symbol { font-size:13px; font-weight:700; color:var(--text); }
+  .eq-sector { font-size:10px; color:var(--muted); }
+  .eq-change { font-size:13px; font-weight:700; text-align:right; }
+  .eq-price { font-size:10px; color:var(--muted); text-align:right; }
+
+  /* REPORT OUTPUT */
+  .report-out {
+    background:var(--bg3); border-radius:8px; padding:12px;
+    font-size:12px; line-height:1.8; color:var(--text);
+    border:1px solid var(--border); white-space:pre-wrap; font-family:monospace;
+    margin-bottom:10px; max-height:300px; overflow-y:auto;
+  }
+  .section-divider { height:1px; background:var(--border); margin:12px 0; }
+  .badge { display:inline-flex; align-items:center; gap:4px; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:600; }
+  .badge.msei { background:#8b5cf620; color:#c4b5fd; border:1px solid #8b5cf640; }
+  .badge.btc { background:#f59e0b20; color:#fbbf24; border:1px solid #f59e0b40; }
+  .badge.equity { background:#3b82f620; color:#93c5fd; border:1px solid #3b82f640; }
+
+  /* BOTTOM NAV */
+  .bottomnav {
+    position:fixed; bottom:0; left:0; right:0;
+    background:var(--bg2); border-top:1px solid var(--border);
+    display:flex; padding:8px 0 calc(8px + env(safe-area-inset-bottom));
+    z-index:20;
+  }
+  .bnav-btn {
+    flex:1; display:flex; flex-direction:column; align-items:center; gap:2px;
+    background:none; border:none; cursor:pointer; padding:4px;
+    color:var(--muted); font-size:9px; font-weight:600; transition:color 0.2s;
+  }
+  .bnav-btn.active { color:var(--gold); }
+  .bnav-icon { font-size:18px; line-height:1; }
+
+  /* INSTALL BANNER */
+  .install-banner {
+    position:fixed; top:0; left:0; right:0; z-index:100;
+    background:linear-gradient(135deg,#d97706,#f59e0b);
+    color:#000; padding:10px 16px;
+    display:flex; justify-content:space-between; align-items:center;
+    font-size:12px; font-weight:700;
+  }
+  .install-banner button { background:#000; color:#f59e0b; border:none; border-radius:6px; padding:6px 12px; font-size:11px; font-weight:700; cursor:pointer; }
+
+  /* TOAST */
+  .toast {
+    position:fixed; bottom:90px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:#1a2236; border:1px solid var(--gold); color:var(--text);
+    padding:10px 20px; border-radius:20px; font-size:12px; font-weight:600;
+    opacity:0; transition:all 0.3s; z-index:50; white-space:nowrap;
+    box-shadow:0 4px 20px #00000080;
+  }
+  .toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+
+  .tab-content { display:none; }
+  .tab-content.active { display:block; }
+
+  /* CHECKLIST MINI */
+  .check-row { display:flex; gap:6px; flex-wrap:wrap; }
+  .check-chip {
+    padding:4px 10px; border-radius:6px; font-size:10px; font-weight:600;
+    border:1px solid; cursor:pointer; transition:all 0.2s;
+  }
+  .check-chip.ok { background:#10b98115; border-color:#10b98140; color:#10b981; }
+  .check-chip.fail { background:#ef444415; border-color:#ef444440; color:#ef4444; }
+  .check-chip.pending { background:var(--bg3); border-color:var(--border); color:var(--muted); }
+
+  .two-col { display:grid; grid-template-columns:1fr 1fr; gap:8px; }
+</style>
+</head>
+<body>
+
+<!-- INSTALL BANNER (shown on non-iOS first visit) -->
+<div class="install-banner" id="installBanner" style="display:none">
+  <div>📲 Home Screen वर App Install करा!</div>
+  <button onclick="installPWA()">Install</button>
+</div>
+
+<!-- TOP BAR -->
+<div class="topbar" id="topbar">
+  <div class="topbar-logo">
+    <div class="logo-icon">₿</div>
+    <div>
+      <div class="logo-text">PravTrade</div>
+      <div class="logo-sub">Inspector Pravin • Thane</div>
+    </div>
+  </div>
+  <div class="topbar-time">
+    <div class="time-display" id="clockDisplay">--:--</div>
+    <div class="date-display" id="dateDisplay">---</div>
+  </div>
+</div>
+
+<!-- WINDOW STATUS BAR -->
+<div class="window-bar">
+  <div class="win-chip" id="win1Chip"><div class="win-dot"></div><span id="win1Text">Morning 8-10 AM</span></div>
+  <div class="win-chip" id="win2Chip"><div class="win-dot"></div><span>Evening 2-4 PM</span></div>
+  <div class="win-chip" id="msei-chip" style="background:#8b5cf620;border-color:#8b5cf6;color:#c4b5fd"><div class="win-dot" style="background:#c4b5fd"></div>MSEI: 10 Days Left</div>
+  <div class="win-chip" id="fta-chip" style="background:#3b82f620;border-color:#3b82f6;color:#93c5fd"><div class="win-dot" style="background:#93c5fd"></div>UK FTA: Jul 15</div>
+</div>
+
+<!-- TAB NAV -->
+<div class="tabnav" id="tabnav">
+  <button class="tab-btn active" onclick="switchTab('dashboard','btn0')" id="btn0">📊 Dashboard</button>
+  <button class="tab-btn" onclick="switchTab('ritual','btn1')" id="btn1">🌅 Ritual</button>
+  <button class="tab-btn" onclick="switchTab('report','btn2')" id="btn2">📰 Report</button>
+  <button class="tab-btn" onclick="switchTab('btc','btn3')" id="btn3">₿ BTC</button>
+  <button class="tab-btn" onclick="switchTab('tradelog','btn4')" id="btn4">📋 Trades</button>
+  <button class="tab-btn" onclick="switchTab('equity','btn5')" id="btn5">📈 Equity</button>
+  <button class="tab-btn" onclick="switchTab('newtrade','btn6')" id="btn6">✍️ Trade</button>
+  <button class="tab-btn" onclick="switchTab('rules','btn7')" id="btn7">🛡 Rules</button>
+</div>
+
+<!-- SCROLL AREA -->
+<div class="scroll-area">
+
+<!-- ===== DASHBOARD TAB ===== -->
+<div class="tab-content active" id="tab-dashboard">
+
+  <div class="card">
+    <div class="card-title"><span>₿</span> BTC OPEN POSITION</div>
+    <div class="pos-header">
+      <div class="pos-details">
+        <b>Bull Put Spread</b> — 60400/60000 PE<br>
+        Lots: <b>100</b> | Expiry: <b>Weekly</b>
+      </div>
+      <div class="pos-badge safe" id="posBadge">SAFE ✓</div>
+    </div>
+    <div class="progress-wrap">
+      <div class="progress-label"><span>Profit %</span><span id="profitPct">—%</span></div>
+      <div class="progress-bar"><div class="progress-fill gold" id="profitBar" style="width:0%"></div></div>
+    </div>
+    <div class="metric-row three" style="margin-top:8px">
+      <div class="metric-box">
+        <div class="metric-label">BTC Entry</div>
+        <div class="metric-value gold" id="btcEntry">—</div>
+        <div class="metric-sub">Manual input करा</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Current</div>
+        <div class="metric-value blue" id="btcCurrent">—</div>
+        <div class="metric-sub">Broker verify</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Target Exit</div>
+        <div class="metric-value green">60-70%</div>
+        <div class="metric-sub">Profit at rule</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>📋</span> PRE-TRADE CHECKLIST</div>
+    <div class="check-row" id="checklistRow">
+      <div class="check-chip pending" onclick="toggleCheck(this,'window')">Window ✓</div>
+      <div class="check-chip pending" onclick="toggleCheck(this,'spread')">Spread Only</div>
+      <div class="check-chip pending" onclick="toggleCheck(this,'lots')">≤100 Lots</div>
+      <div class="check-chip pending" onclick="toggleCheck(this,'otm')">1.5%+ OTM</div>
+      <div class="check-chip pending" onclick="toggleCheck(this,'credit')">25%+ Credit</div>
+      <div class="check-chip pending" onclick="toggleCheck(this,'weekly')">Weekly Expiry</div>
+      <div class="check-chip pending" onclick="toggleCheck(this,'tradecount')">≤2 Trades/day</div>
+      <div class="check-chip pending" onclick="toggleCheck(this,'maxloss')">3% Max Loss</div>
+    </div>
+    <div style="margin-top:10px; font-size:11px; color:var(--muted)">Tap each rule to confirm ✓</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>⚠️</span> PORTFOLIO ALERTS</div>
+    <div class="alert-item danger">⚠️ <div><b>OMAXAUTO</b> — मोठा unrealized loss. Position review करा.</div></div>
+    <div class="alert-item danger">⚠️ <div><b>MODINSU</b> — Large position + loss. Risk high.</div></div>
+    <div class="alert-item warn">📊 <div><b>MTARTECH</b> — Bloom Energy concentration risk.</div></div>
+    <div class="alert-item success">🟢 <div><b>MSEI Unlisted</b> — 94,327 shares. LES deadline: Jun 30, 2026.</div></div>
+    <div class="alert-item info">ℹ️ <div><b>HFCL</b> — ATH ₹208.98 (Jun 2026). ₹171 support.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>🌍</span> MARKET SNAPSHOT</div>
+    <div class="metric-row">
+      <div class="metric-box">
+        <div class="metric-label">USD/INR</div>
+        <div class="metric-value gold" id="usdInr">—</div>
+        <div class="metric-sub">Input करा ↓</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Nifty</div>
+        <div class="metric-value blue" id="niftyVal">—</div>
+        <div class="metric-sub">Input करा ↓</div>
+      </div>
+    </div>
+    <div class="metric-row" style="margin-top:8px">
+      <div class="metric-box">
+        <div class="metric-label">FPI Flow</div>
+        <div class="metric-value" id="fpiVal">—</div>
+        <div class="metric-sub">+/- Cr</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">PCR</div>
+        <div class="metric-value" id="pcrVal">—</div>
+        <div class="metric-sub">Put/Call Ratio</div>
+      </div>
+    </div>
+    <div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap">
+      <input class="inp" id="inpUsdInr" placeholder="USD/INR e.g. 83.42" type="number" style="flex:1;min-width:120px" oninput="updateMarket()">
+      <input class="inp" id="inpNifty" placeholder="Nifty e.g. 24520" type="number" style="flex:1;min-width:120px" oninput="updateMarket()">
+    </div>
+    <div style="margin-top:6px; display:flex; gap:6px; flex-wrap:wrap">
+      <input class="inp" id="inpFpi" placeholder="FPI +/- Cr" type="number" style="flex:1;min-width:120px" oninput="updateMarket()">
+      <input class="inp" id="inpPcr" placeholder="PCR e.g. 1.2" type="number" step="0.01" style="flex:1;min-width:120px" oninput="updateMarket()">
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>⏰</span> DISCIPLINE REMINDER</div>
+    <div class="alert-item warn">⏱ Trading Windows: <b>8–10 AM</b> & <b>2–4 PM IST</b> only</div>
+    <div class="alert-item info" style="margin-top:6px">📊 Max <b>100 lots</b> | Spreads only | ≤2 trades/day</div>
+    <div class="alert-item success" style="margin-top:6px">🎯 Exit at <b>60–70% profit</b> — no greed!</div>
+    <div class="alert-item danger" style="margin-top:6px">🚫 NO Daily expiry | NO Futures >20x leverage</div>
+  </div>
+
+</div>
+
+<!-- ===== RITUAL TAB ===== -->
+<div class="tab-content" id="tab-ritual">
+  <div class="card">
+    <div class="card-title"><span>🌅</span> आजचा RITUAL SCORE</div>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">
+      <div style="font-size:36px;font-weight:900;color:var(--gold)" id="habitScore">0</div>
+      <div style="flex:1">
+        <div style="font-size:12px;color:var(--muted)">/ 10 tasks</div>
+        <div class="habit-score-bar" id="scoreBar"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>☀️</span> MORNING ROUTINE</div>
+    <div id="habitMorning"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>📊</span> MARKET TASKS</div>
+    <div id="habitMarket"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span>🌙</span> EVENING / NIGHT</div>
+    <div id="habitEvening"></div>
+  </div>
+
+  <button class="btn btn-outline" style="margin-top:4px" onclick="resetHabits()">🔄 आजचा Reset</button>
+</div>
+
+<!-- ===== REPORT TAB ===== -->
+<div class="tab-content" id="tab-report">
+  <div class="card">
+    <div class="card-title"><span>📰</span> DAILY MARKET REPORT</div>
+
+    <div class="input-group">
+      <div class="input-label">BTC Price (USDT)</div>
+      <input class="inp" id="rBtc" type="number" placeholder="e.g. 67500">
+    </div>
+    <div class="two-col">
+      <div class="input-group">
+        <div class="input-label">BTC Max Pain</div>
+        <input class="inp" id="rMaxPain" type="number" placeholder="e.g. 66000">
+      </div>
+      <div class="input-group">
+        <div class="input-label">PCR</div>
+        <input class="inp" id="rPcr" type="number" step="0.01" placeholder="1.2">
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="input-group">
+        <div class="input-label">Nifty Level</div>
+        <input class="inp" id="rNifty" type="number" placeholder="e.g. 24520">
+      </div>
+      <div class="input-group">
+        <div class="input-label">USD/INR</div>
+        <input class="inp" id="rUsdInr" type="number" step="0.01" placeholder="83.42">
+      </div>
+    </div>
+    <div class="input-group">
+      <div class="input-label">FPI Flow (Cr)</div>
+      <input class="inp" id="rFpi" type="number" placeholder="+2500 किंवा -1800">
+    </div>
+    <div class="input-group">
+      <div class="input-label">Macro Headline (थोडक्यात)</div>
+      <input class="inp" id="rMacro" placeholder="e.g. Fed pause, Iran tension...">
+    </div>
+    <div class="input-group">
+      <div class="input-label">आजचा Trade Plan</div>
+      <input class="inp" id="rPlan" placeholder="e.g. 60400/60000 Bull Put hold...">
+    </div>
+    <div class="input-group">
+      <div class="input-label">Report प्रकार</div>
+      <select class="inp" id="rType">
+        <option value="morning">🌅 Morning Report</option>
+        <option value="evening">🌙 Evening Report</option>
+      </select>
+    </div>
+
+    <button class="btn btn-gold" onclick="generateReport()">📊 Report Generate करा</button>
+  </div>
+
+  <div id="reportOutput" style="display:none">
+    <div class="card">
+      <div class="card-title"><span>📋</span> GENERATED REPORT</div>
+      <div class="report-out" id="reportText"></div>
+      <button class="btn btn-green" onclick="copyReport()">📋 Copy करा</button>
+    </div>
+  </div>
+
+  <div class="card" id="savedReports">
+    <div class="card-title"><span>💾</span> SAVED REPORTS (Last 5)</div>
+    <div id="savedReportsList"><div style="color:var(--muted);font-size:12px">अजून कोणता report नाही.</div></div>
+  </div>
+</div>
+
+<!-- ===== BTC TAB ===== -->
+<div class="tab-content" id="tab-btc">
+  <div class="card">
+    <div class="card-title"><span>₿</span> BTC POSITION UPDATE</div>
+    <div class="two-col">
+      <div class="input-group">
+        <div class="input-label">Current BTC Price</div>
+        <input class="inp" id="btcPriceInput" type="number" placeholder="e.g. 67800" oninput="updateBTCStatus()">
+      </div>
+      <div class="input-group">
+        <div class="input-label">Credit Received (USDT)</div>
+        <input class="inp" id="creditInput" type="number" placeholder="e.g. 105" oninput="updateBTCStatus()">
+      </div>
+    </div>
+    <div class="metric-row three">
+      <div class="metric-box">
+        <div class="metric-label">Position Status</div>
+        <div class="metric-value" id="btcStatusVal">—</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">P&L USDT</div>
+        <div class="metric-value" id="btcPnl">—</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Safety %</div>
+        <div class="metric-value" id="btcSafety">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>📡</span> SCENARIO ANALYSIS</div>
+    <div id="scenarioCards"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>🔔</span> CUSTOM PRICE ALERTS</div>
+    <div style="display:flex;gap:6px;margin-bottom:8px">
+      <input class="inp" id="alertPrice" type="number" placeholder="Alert Price (USDT)" style="flex:1">
+      <input class="inp" id="alertNote" placeholder="Note" style="flex:1">
+    </div>
+    <button class="btn btn-gold btn-sm" onclick="addAlert()">+ Alert Add</button>
+    <div id="alertsList" style="margin-top:10px"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>🐋</span> WHALE NOTES</div>
+    <textarea class="inp" id="whaleNotes" rows="4" placeholder="Whale activity, large OI changes, unusual moves..."></textarea>
+    <button class="btn btn-outline btn-sm" style="margin-top:6px;width:auto;padding:8px 16px" onclick="saveWhaleNotes()">💾 Save</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>📊</span> BTC ALERT LOG</div>
+    <div id="btcAlertLog">
+      <div class="alert-item info"><span class="alert-time">Now</span> BTC Terminal ready — Delta Exchange app वरून price verify करा</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TRADE LOG TAB ===== -->
+<div class="tab-content" id="tab-tradelog">
+  <div class="card">
+    <div class="card-title"><span>📊</span> TRADE SUMMARY</div>
+    <div class="metric-row three">
+      <div class="metric-box">
+        <div class="metric-label">Total Trades</div>
+        <div class="metric-value gold" id="totalTrades">0</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Win / Loss</div>
+        <div class="metric-value"><span class="green" id="winCount">0</span>/<span class="red" id="lossCount">0</span></div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Net P&L</div>
+        <div class="metric-value" id="netPnl">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>📋</span> TRADE HISTORY</div>
+    <div id="tradeList"><div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">अजून कोणता trade नाही.<br>✍️ Trade tab मधून add करा.</div></div>
+    <button class="btn btn-outline btn-sm" style="margin-top:8px;width:auto;padding:8px 14px" onclick="clearTrades()">🗑 Clear All</button>
+  </div>
+</div>
+
+<!-- ===== EQUITY TAB ===== -->
+<div class="tab-content" id="tab-equity">
+  <div class="card">
+    <div class="card-title"><span>⚠️</span> CRITICAL POSITIONS</div>
+    <div class="alert-item danger">🚨 <div><b>OMAXAUTO</b> — मोठा loss position. Exit strategy ठरवा!</div></div>
+    <div class="alert-item danger">⚠️ <div><b>MODINSU</b> — Large allocation + unrealized loss. Review needed.</div></div>
+    <div class="alert-item warn">📊 <div><b>MTARTECH</b> — Bloom Energy single-customer concentration risk watch.</div></div>
+    <div class="alert-item success">✅ <div><b>MSEI 94,327 shares</b> — LES deadline <b>June 30, 2026</b>. 10 days!</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>📈</span> WATCHLIST</div>
+    <div id="watchlistContainer"></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>🔍</span> PEAD FOCUS STOCKS</div>
+    <div class="alert-item info">📊 WOCKPHARMA — ZAYNICH FDA catalyst confirmed</div>
+    <div class="alert-item info" style="margin-top:4px">💊 Bliss GVS Pharma — PEAD score check</div>
+    <div class="alert-item info" style="margin-top:4px">🏥 Shilpa Medicare — Watch</div>
+    <div class="alert-item info" style="margin-top:4px">🏗 Sanghvi Movers — Infrastructure play</div>
+    <div class="alert-item info" style="margin-top:4px">💼 GeeCee Ventures — Unlisted exposure</div>
+    <div style="margin-top:8px;font-size:11px;color:var(--muted)">* financiallyfree.in वर PEAD score verify करा</div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>🇬🇧</span> UK FTA PLAYS (Jul 15, 2026)</div>
+    <div class="alert-item success">🧵 Textile exporters — tariff benefit</div>
+    <div class="alert-item success" style="margin-top:4px">💊 Pharma — UK market access</div>
+    <div class="alert-item success" style="margin-top:4px">🛠 Auto components — duty reduction</div>
+    <div class="alert-item info" style="margin-top:4px">💡 IT services — professional visa ease</div>
+  </div>
+</div>
+
+<!-- ===== NEW TRADE TAB ===== -->
+<div class="tab-content" id="tab-newtrade">
+  <div class="card">
+    <div class="card-title"><span>✍️</span> NEW TRADE ENTRY</div>
+
+    <div class="input-group">
+      <div class="input-label">Trade Type</div>
+      <select class="inp" id="ntType">
+        <option value="bull_put">Bull Put Spread</option>
+        <option value="bear_call">Bear Call Spread</option>
+        <option value="futures">Futures</option>
+        <option value="equity">Equity Buy/Sell</option>
+      </select>
+    </div>
+    <div class="two-col">
+      <div class="input-group">
+        <div class="input-label">Sold Strike</div>
+        <input class="inp" id="ntStrike1" type="number" placeholder="e.g. 60400">
+      </div>
+      <div class="input-group">
+        <div class="input-label">Bought Strike</div>
+        <input class="inp" id="ntStrike2" type="number" placeholder="e.g. 60000">
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="input-group">
+        <div class="input-label">Lots (Max 100)</div>
+        <input class="inp" id="ntLots" type="number" placeholder="e.g. 50" max="100" oninput="checkLots(this)">
+      </div>
+      <div class="input-group">
+        <div class="input-label">Credit/Debit (USDT)</div>
+        <input class="inp" id="ntCredit" type="number" placeholder="e.g. 105">
+      </div>
+    </div>
+    <div class="two-col">
+      <div class="input-group">
+        <div class="input-label">BTC Price Now</div>
+        <input class="inp" id="ntBtcPrice" type="number" placeholder="e.g. 67800">
+      </div>
+      <div class="input-group">
+        <div class="input-label">Expiry</div>
+        <select class="inp" id="ntExpiry">
+          <option value="weekly">Weekly ✓</option>
+          <option value="daily">Daily ✗ VIOLATION</option>
+          <option value="monthly">Monthly</option>
+        </select>
+      </div>
+    </div>
+    <div class="input-group">
+      <div class="input-label">Notes</div>
+      <input class="inp" id="ntNotes" placeholder="Strategy rationale...">
+    </div>
+
+    <div id="ruleCheckResults" style="margin:10px 0"></div>
+
+    <button class="btn btn-gold" onclick="validateAndAddTrade()">🔍 Rules Check + Add Trade</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>📊</span> आज किती Trades?</div>
+    <div class="metric-row">
+      <div class="metric-box">
+        <div class="metric-label">आज Trades</div>
+        <div class="metric-value gold" id="todayTradeCount">0</div>
+        <div class="metric-sub">Max 2 allowed</div>
+      </div>
+      <div class="metric-box">
+        <div class="metric-label">Remaining</div>
+        <div class="metric-value green" id="tradesRemaining">2</div>
+        <div class="metric-sub">आज बाकी</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== RULES TAB ===== -->
+<div class="tab-content" id="tab-rules">
+  <div class="card">
+    <div class="card-title"><span>🛡</span> 10 TRADING RULES (Delta Exchange)</div>
+    <div class="rule-item"><div class="rule-num">1</div><div class="rule-text"><b>Spreads Only</b> — Bull Put किंवा Bear Call spread. Plain options/futures नाही.</div></div>
+    <div class="rule-item"><div class="rule-num">2</div><div class="rule-text"><b>Max 100 Lots</b> — Hard limit. 100+ lots = immediate rule violation.</div></div>
+    <div class="rule-item"><div class="rule-num">3</div><div class="rule-text"><b>Weekly Expiry Only</b> — Daily expiry strictly banned. मोठे losses होतात.</div></div>
+    <div class="rule-item"><div class="rule-num">4</div><div class="rule-text"><b>Trading Windows</b> — <b>8–10 AM</b> आणि <b>2–4 PM IST</b> only. बाकी वेळ NO TRADE.</div></div>
+    <div class="rule-item"><div class="rule-num">5</div><div class="rule-text"><b>Max 2 Trades/Day</b> — दोनपेक्षा जास्त = violation. Patience ठेवा.</div></div>
+    <div class="rule-item"><div class="rule-num">6</div><div class="rule-text"><b>Sold Strike 1.5%+ OTM</b> — BTC price पासून किमान 1.5% दूर असणे आवश्यक.</div></div>
+    <div class="rule-item"><div class="rule-num">7</div><div class="rule-text"><b>Credit ≥ 25% of Spread</b> — Spread width च्या 25% पेक्षा जास्त credit मिळाल्यासच trade.</div></div>
+    <div class="rule-item"><div class="rule-num">8</div><div class="rule-text"><b>Max Loss 3% Capital</b> — एका trade मध्ये 3% पेक्षा जास्त capital risk नाही.</div></div>
+    <div class="rule-item"><div class="rule-num">9</div><div class="rule-text"><b>Exit at 60–70% Profit</b> — Target hit झाल्यावर लगेच exit. Greed करू नका!</div></div>
+    <div class="rule-item"><div class="rule-num">10</div><div class="rule-text"><b>Futures Max 20x Leverage</b> — Futures trade असल्यास 20x पेक्षा जास्त leverage नाही.</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-title"><span>🌅</span> DAILY HABITS</div>
+    <div class="rule-item"><div class="rule-num" style="background:#10b981">S</div><div class="rule-text"><b>Suryanamaskar</b> — Daily सकाळी. शरीर आणि मन strong राहते.</div></div>
+    <div class="rule-item"><div class="rule-num" style="background:#3b82f6">M</div><div class="rule-text"><b>Morning Report</b> — Market open होण्यापूर्वी report तयार करा.</div></div>
+    <div class="rule-item"><div class="rule-num" style="background:#8b5cf6">A</div><div class="rule-text"><b>Affirmations</b> — Positive mindset. Trading discipline अफाट improve होते.</div></div>
+    <div class="rule-item"><div class="rule-num" style="background:#ef4444">R</div><div class="rule-text"><b>10 PM Alarm</b> — Night routine. Rest important आहे. Trading next day.</div></div>
+  </div>
+
+  <div class="card" style="border-color:#ef444440;background:#ef444408">
+    <div class="card-title" style="color:#ef4444"><span>🚫</span> STRICTLY FORBIDDEN</div>
+    <div class="alert-item danger">❌ Daily expiry options — heavy losses documented</div>
+    <div class="alert-item danger" style="margin-top:4px">❌ 100+ lots — capital wipeout risk</div>
+    <div class="alert-item danger" style="margin-top:4px">❌ Trading outside windows — emotional decisions</div>
+    <div class="alert-item danger" style="margin-top:4px">❌ 3+ trades in one day — overtrading</div>
+  </div>
+</div>
+
+</div><!-- end scroll-area -->
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ============ STATE ============
+const STATE_KEY = 'pravtrade_v2';
+let state = {
+  habits: {},
+  trades: [],
+  btcAlerts: [],
+  whaleNotes: '',
+  savedReports: [],
+  habitDate: '',
+  checklist: {}
+};
+
+function loadState() {
+  try {
+    const s = localStorage.getItem(STATE_KEY);
+    if (s) state = {...state, ...JSON.parse(s)};
+  } catch(e) {}
+}
+function saveState() {
+  try { localStorage.setItem(STATE_KEY, JSON.stringify(state)); } catch(e) {}
+}
+
+// ============ CLOCK ============
+function updateClock() {
+  const now = new Date();
+  const h = now.getHours().toString().padStart(2,'0');
+  const m = now.getMinutes().toString().padStart(2,'0');
+  document.getElementById('clockDisplay').textContent = `${h}:${m}`;
+
+  const days = ['रविवार','सोमवार','मंगळवार','बुधवार','गुरुवार','शुक्रवार','शनिवार'];
+  const months = ['जाने','फेब्रु','मार्च','एप्रिल','मे','जून','जुलै','ऑगस्ट','सप्टेंबर','ऑक्टोबर','नोव्हेंबर','डिसेंबर'];
+  document.getElementById('dateDisplay').textContent =
+    `${days[now.getDay()]}, ${now.getDate()} ${months[now.getMonth()]} ${now.getFullYear()}`;
+
+  updateWindowStatus(now);
+}
+
+function updateWindowStatus(now) {
+  const h = now.getHours(), m = now.getMinutes();
+  const mins = h * 60 + m;
+  const w1 = mins >= 480 && mins < 600;
+  const w2 = mins >= 840 && mins < 960;
+
+  const c1 = document.getElementById('win1Chip');
+  const c2 = document.getElementById('win2Chip');
+
+  if (w1) {
+    c1.className = 'win-chip active';
+    c1.querySelector('span').textContent = '🟢 Morning 8-10 AM OPEN';
+  } else {
+    c1.className = 'win-chip inactive';
+    c1.querySelector('span').textContent = 'Morning 8-10 AM';
+  }
+
+  if (w2) {
+    c2.className = 'win-chip active';
+  } else {
+    c2.className = 'win-chip inactive';
+  }
+}
+
+// ============ TABS ============
+let activeTab = 'dashboard';
+function switchTab(tab, btnId) {
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  document.getElementById(btnId).classList.add('active');
+  activeTab = tab;
+}
+
+// ============ CHECKLIST ============
+function toggleCheck(el, key) {
+  const isOk = el.classList.contains('ok');
+  if (isOk) {
+    el.classList.remove('ok'); el.classList.add('fail');
+    state.checklist[key] = false;
+  } else if (el.classList.contains('fail')) {
+    el.classList.remove('fail'); el.classList.add('pending');
+    delete state.checklist[key];
+  } else {
+    el.classList.add('ok');
+    state.checklist[key] = true;
+  }
+  saveState();
+}
+
+// ============ MARKET UPDATE ============
+function updateMarket() {
+  const usdInr = document.getElementById('inpUsdInr').value;
+  const nifty = document.getElementById('inpNifty').value;
+  const fpi = document.getElementById('inpFpi').value;
+  const pcr = document.getElementById('inpPcr').value;
+
+  if (usdInr) {
+    document.getElementById('usdInr').textContent = '₹' + parseFloat(usdInr).toFixed(2);
+    document.getElementById('usdInr').className = 'metric-value gold';
+  }
+  if (nifty) {
+    document.getElementById('niftyVal').textContent = parseInt(nifty).toLocaleString('en-IN');
+    document.getElementById('niftyVal').className = 'metric-value blue';
+  }
+  if (fpi) {
+    const v = parseFloat(fpi);
+    document.getElementById('fpiVal').textContent = (v>=0?'+':'')+v.toLocaleString('en-IN');
+    document.getElementById('fpiVal').className = 'metric-value ' + (v>=0?'green':'red');
+  }
+  if (pcr) {
+    document.getElementById('pcrVal').textContent = parseFloat(pcr).toFixed(2);
+    const pcrClass = parseFloat(pcr) > 1 ? 'green' : parseFloat(pcr) < 0.8 ? 'red' : 'gold';
+    document.getElementById('pcrVal').className = 'metric-value ' + pcrClass;
+  }
+}
+
+// ============ BTC STATUS ============
+function updateBTCStatus() {
+  const price = parseFloat(document.getElementById('btcPriceInput').value);
+  const credit = parseFloat(document.getElementById('creditInput').value);
+
+  if (!price) return;
+
+  const soldStrike = 60400;
+  const boughtStrike = 60000;
+  const spreadWidth = soldStrike - boughtStrike;
+  const pctAboveSold = ((price - soldStrike) / price * 100).toFixed(2);
+  const safety = ((price - soldStrike) / price * 100);
+
+  let status, statusClass;
+  if (price > soldStrike * 1.02) { status = '✅ SAFE'; statusClass = 'green'; }
+  else if (price > soldStrike) { status = '⚠️ WATCH'; statusClass = 'gold'; }
+  else { status = '🚨 DANGER'; statusClass = 'red'; }
+
+  document.getElementById('btcStatusVal').textContent = status.split(' ')[1];
+  document.getElementById('btcStatusVal').className = 'metric-value ' + statusClass;
+  document.getElementById('btcSafety').textContent = pctAboveSold + '%';
+  document.getElementById('btcSafety').className = 'metric-value ' + (safety > 2 ? 'green' : safety > 0 ? 'gold' : 'red');
+
+  if (credit) {
+    const pnl = (credit * 100).toFixed(0);
+    document.getElementById('btcPnl').textContent = '+$' + pnl;
+    document.getElementById('btcPnl').className = 'metric-value green';
+    document.getElementById('profitPct').textContent = Math.min(100, (credit/spreadWidth*100)).toFixed(0) + '%';
+    document.getElementById('profitBar').style.width = Math.min(100, (credit/spreadWidth*100)) + '%';
+  }
+
+  // Scenarios
+  const scenarios = [
+    { price: price * 0.95, label: 'BTC -5%', color: 'red' },
+    { price: price * 0.98, label: 'BTC -2%', color: 'gold' },
+    { price: price, label: 'Current', color: 'blue' },
+    { price: price * 1.02, label: 'BTC +2%', color: 'green' },
+  ];
+  const sc = document.getElementById('scenarioCards');
+  sc.innerHTML = scenarios.map(s => {
+    const safe = s.price > soldStrike ? '✅ SAFE' : s.price > boughtStrike ? '⚠️ RISK' : '🚨 LOSS';
+    return `<div class="alert-item ${s.color === 'green' ? 'success' : s.color === 'red' ? 'danger' : s.color === 'gold' ? 'warn' : 'info'}" style="margin-bottom:4px">
+      <b>${s.label}</b> @ $${s.price.toFixed(0)} → ${safe}
+    </div>`;
+  }).join('');
+
+  // Update dashboard badge
+  document.getElementById('btcCurrent').textContent = '$' + price.toLocaleString();
+  document.getElementById('posBadge').textContent = status;
+  document.getElementById('posBadge').className = 'pos-badge ' + (safety > 2 ? 'safe' : safety > 0 ? 'watch' : 'danger');
+
+  addBtcLog(`BTC @ $${price.toLocaleString()} — ${status}`, statusClass === 'green' ? 'success' : statusClass === 'red' ? 'danger' : 'warn');
+}
+
+function addBtcLog(msg, type='info') {
+  const log = document.getElementById('btcAlertLog');
+  const now = new Date();
+  const t = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
+  const div = document.createElement('div');
+  div.className = `alert-item ${type}`;
+  div.style.marginBottom = '4px';
+  div.innerHTML = `<span class="alert-time">${t}</span> ${msg}`;
+  log.insertBefore(div, log.firstChild);
+  if (log.children.length > 10) log.removeChild(log.lastChild);
+}
+
+// ============ ALERTS ============
+function addAlert() {
+  const price = document.getElementById('alertPrice').value;
+  const note = document.getElementById('alertNote').value;
+  if (!price) { showToast('Alert price टाका!'); return; }
+  state.btcAlerts.push({ price: parseFloat(price), note, id: Date.now() });
+  saveState();
+  renderAlerts();
+  document.getElementById('alertPrice').value = '';
+  document.getElementById('alertNote').value = '';
+  showToast('✅ Alert added!');
+}
+
+function renderAlerts() {
+  const list = document.getElementById('alertsList');
+  if (!state.btcAlerts.length) { list.innerHTML = '<div style="color:var(--muted);font-size:12px">कोणताही alert नाही.</div>'; return; }
+  list.innerHTML = state.btcAlerts.map((a,i) => `
+    <div class="alert-item warn" style="margin-bottom:4px;justify-content:space-between">
+      <span>🔔 $${a.price.toLocaleString()} — ${a.note || 'No note'}</span>
+      <button onclick="removeAlert(${i})" style="background:#ef444420;border:1px solid #ef4444;color:#ef4444;border-radius:4px;padding:2px 6px;font-size:10px;cursor:pointer">✕</button>
+    </div>`).join('');
+}
+
+function removeAlert(i) {
+  state.btcAlerts.splice(i, 1);
+  saveState(); renderAlerts();
+}
+
+function saveWhaleNotes() {
+  state.whaleNotes = document.getElementById('whaleNotes').value;
+  saveState();
+  showToast('🐋 Notes saved!');
+}
+
+// ============ HABITS ============
+const HABITS = [
+  { id:'surya', group:'morning', text:'🌞 Suryanamaskar', time:'5:30 AM', sub:'Daily routine' },
+  { id:'affirmations', group:'morning', text:'✨ Affirmations', time:'6:00 AM', sub:'Positive mindset' },
+  { id:'typing', group:'morning', text:'⌨️ Typing Practice', time:'6:30 AM', sub:'Skill building' },
+  { id:'ffd', group:'morning', text:'📱 FFD App Video', time:'7:00 AM', sub:'Market learning' },
+  { id:'morningreport', group:'market', text:'📰 Morning Report', time:'7:45 AM', sub:'Before market' },
+  { id:'window1', group:'market', text:'📊 Trading Window 8-10 AM', time:'8:00 AM', sub:'Execute trades' },
+  { id:'review', group:'market', text:'🔍 Portfolio Review', time:'1:00 PM', sub:'Positions check' },
+  { id:'window2', group:'market', text:'📊 Trading Window 2-4 PM', time:'2:00 PM', sub:'Execute trades' },
+  { id:'eveningreport', group:'evening', text:'🌙 Evening Report', time:'4:30 PM', sub:'EOD analysis' },
+  { id:'night', group:'evening', text:'🛌 Night Routine + 10 PM Alarm', time:'10:00 PM', sub:'Rest & recovery' },
+];
+
+function getTodayStr() {
+  const d = new Date();
+  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+}
+
+function renderHabits() {
+  const today = getTodayStr();
+  if (state.habitDate !== today) {
+    state.habits = {};
+    state.habitDate = today;
+    saveState();
+  }
+
+  ['morning','market','evening'].forEach(group => {
+    const container = document.getElementById('habit' + group.charAt(0).toUpperCase() + group.slice(1));
+    if (!container) return;
+    container.innerHTML = HABITS.filter(h => h.group === group).map(h => `
+      <div class="habit-item ${state.habits[h.id] ? 'done' : ''}" onclick="toggleHabit('${h.id}')">
+        <div class="habit-check">${state.habits[h.id] ? '✓' : ''}</div>
+        <div class="habit-text">${h.text}</div>
+        <div class="habit-time">${h.time}</div>
+      </div>`).join('');
+  });
+
+  const score = Object.values(state.habits).filter(Boolean).length;
+  document.getElementById('habitScore').textContent = score;
+
+  const bar = document.getElementById('scoreBar');
+  bar.innerHTML = Array(10).fill(0).map((_,i) =>
+    `<div class="score-seg ${i < score ? 'filled' : ''}"></div>`).join('');
+}
+
+function toggleHabit(id) {
+  state.habits[id] = !state.habits[id];
+  saveState();
+  renderHabits();
+  if (state.habits[id]) showToast('✅ Done!');
+}
+
+function resetHabits() {
+  state.habits = {};
+  state.habitDate = getTodayStr();
+  saveState();
+  renderHabits();
+  showToast('🔄 Reset केला!');
+}
+
+// ============ TRADE VALIDATION ============
+function checkLots(inp) {
+  if (parseInt(inp.value) > 100) {
+    inp.value = 100;
+    showToast('🚫 100 lot hard limit!');
+  }
+}
+
+function validateAndAddTrade() {
+  const type = document.getElementById('ntType').value;
+  const strike1 = parseFloat(document.getElementById('ntStrike1').value);
+  const strike2 = parseFloat(document.getElementById('ntStrike2').value);
+  const lots = parseInt(document.getElementById('ntLots').value);
+  const credit = parseFloat(document.getElementById('ntCredit').value);
+  const btcPrice = parseFloat(document.getElementById('ntBtcPrice').value);
+  const expiry = document.getElementById('ntExpiry').value;
+  const notes = document.getElementById('ntNotes').value;
+
+  const violations = [];
+  const now = new Date();
+  const h = now.getHours(), m = now.getMinutes();
+  const mins = h * 60 + m;
+  const inWindow = (mins >= 480 && mins < 600) || (mins >= 840 && mins < 960);
+
+  if (!inWindow) violations.push('⏱ Trading window बाहेर आहे (8-10 AM / 2-4 PM only)');
+  if (lots > 100) violations.push('🚫 100 lots पेक्षा जास्त!');
+  if (expiry === 'daily') violations.push('🚫 Daily expiry FORBIDDEN!');
+  if (type === 'futures') violations.push('⚠️ Futures trade — 20x leverage cap confirm करा');
+  if (type === 'bull_put' || type === 'bear_call') {
+    if (btcPrice && strike1) {
+      const pctOtm = Math.abs((btcPrice - strike1) / btcPrice * 100);
+      if (pctOtm < 1.5) violations.push(`📊 Sold strike फक्त ${pctOtm.toFixed(1)}% OTM — 1.5%+ required`);
+    }
+    if (strike1 && strike2 && credit) {
+      const spreadW = Math.abs(strike1 - strike2);
+      const creditPct = (credit / spreadW * 100);
+      if (creditPct < 25) violations.push(`💰 Credit ${creditPct.toFixed(1)}% — 25%+ required`);
+    }
+  }
+
+  const todayTrades = state.trades.filter(t => {
+    const d = new Date(t.timestamp);
+    const n = new Date();
+    return d.getDate() === n.getDate() && d.getMonth() === n.getMonth();
+  });
+  if (todayTrades.length >= 2) violations.push('📊 आज 2 trades already झाले — STOP');
+
+  const res = document.getElementById('ruleCheckResults');
+  if (violations.length > 0) {
+    res.innerHTML = violations.map(v =>
+      `<div class="alert-item danger" style="margin-bottom:4px">${v}</div>`).join('');
+    showToast('⚠️ ' + violations.length + ' violations!');
+
+    // Still save with violation flag
+    if (violations.some(v => v.includes('Daily') || v.includes('100 lots'))) {
+      showToast('🚫 HARD BLOCK — Trade added as VIOLATION');
+    }
+  } else {
+    res.innerHTML = '<div class="alert-item success">✅ सर्व rules OK — Trade valid!</div>';
+  }
+
+  const trade = {
+    id: Date.now(),
+    type, strike1, strike2, lots, credit, btcPrice, expiry, notes,
+    timestamp: new Date().toISOString(),
+    violations: violations,
+    status: 'open'
+  };
+  state.trades.unshift(trade);
+  saveState();
+  renderTradeLog();
+  updateTradeCounts();
+  showToast(violations.length ? '⚠️ Trade logged with violations' : '✅ Trade logged!');
+}
+
+function renderTradeLog() {
+  const list = document.getElementById('tradeList');
+  if (!state.trades.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:12px;text-align:center;padding:20px">अजून कोणता trade नाही.</div>';
+    return;
+  }
+  list.innerHTML = state.trades.slice(0,20).map((t,i) => {
+    const d = new Date(t.timestamp);
+    const dateStr = `${d.getDate()}/${d.getMonth()+1} ${d.getHours()}:${d.getMinutes().toString().padStart(2,'0')}`;
+    const hasViolation = t.violations && t.violations.length > 0;
+    return `<div class="trade-item ${hasViolation ? 'violation' : 'open'}">
+      <div class="trade-header">
+        <span class="trade-name">${t.type.replace('_',' ').toUpperCase()} ${t.strike1 || ''}/${t.strike2 || ''}</span>
+        <span class="trade-pnl open">OPEN</span>
+      </div>
+      <div class="trade-meta">${dateStr} | ${t.lots || '—'} lots | Credit: ${t.credit || '—'} USDT</div>
+      ${hasViolation ? `<div style="margin-top:4px">${t.violations.map(v => `<span class="violation-tag">${v.substring(0,40)}</span>`).join(' ')}</div>` : ''}
+    </div>`;
+  }).join('');
+
+  // Summary
+  document.getElementById('totalTrades').textContent = state.trades.length;
+  document.getElementById('winCount').textContent = state.trades.filter(t=>t.status==='win').length;
+  document.getElementById('lossCount').textContent = state.trades.filter(t=>t.status==='loss').length;
+  document.getElementById('netPnl').textContent = '—';
+}
+
+function updateTradeCounts() {
+  const today = state.trades.filter(t => {
+    const d = new Date(t.timestamp), n = new Date();
+    return d.getDate() === n.getDate() && d.getMonth() === n.getMonth();
+  });
+  const count = today.length;
+  document.getElementById('todayTradeCount').textContent = count;
+  const rem = Math.max(0, 2 - count);
+  document.getElementById('tradesRemaining').textContent = rem;
+  document.getElementById('tradesRemaining').className = 'metric-value ' + (rem > 0 ? 'green' : 'red');
+}
+
+function clearTrades() {
+  if (confirm('सर्व trades delete करायचे?')) {
+    state.trades = [];
+    saveState();
+    renderTradeLog();
+    updateTradeCounts();
+    showToast('🗑 Cleared!');
+  }
+}
+
+// ============ REPORT ============
+function generateReport() {
+  const btc = document.getElementById('rBtc').value;
+  const maxPain = document.getElementById('rMaxPain').value;
+  const pcr = document.getElementById('rPcr').value;
+  const nifty = document.getElementById('rNifty').value;
+  const usdInr = document.getElementById('rUsdInr').value;
+  const fpi = document.getElementById('rFpi').value;
+  const macro = document.getElementById('rMacro').value;
+  const plan = document.getElementById('rPlan').value;
+  const type = document.getElementById('rType').value;
+
+  const now = new Date();
+  const dateStr = `${now.getDate()}/${now.getMonth()+1}/${now.getFullYear()} ${now.getHours()}:${now.getMinutes().toString().padStart(2,'0')}`;
+  const emoji = type === 'morning' ? '🌅' : '🌙';
+
+  const report = `${emoji} ${type === 'morning' ? 'सकाळचा' : 'संध्याकाळचा'} MARKET REPORT
+📅 ${dateStr}
+━━━━━━━━━━━━━━━━━━━━━
+₿ BTC DASHBOARD
+━━━━━━━━━━━━━━━━━━━━━
+• Current Price: $${btc || '—'}
+• Max Pain: $${maxPain || '—'}
+• PCR: ${pcr || '—'} ${pcr > 1 ? '(Bullish)' : pcr < 0.8 ? '(Bearish)' : '(Neutral)'}
+• Open Position: 60400/60000 Bull Put | 100 lots
+
+━━━━━━━━━━━━━━━━━━━━━
+📊 INDIAN MARKETS
+━━━━━━━━━━━━━━━━━━━━━
+• Nifty: ${nifty ? parseInt(nifty).toLocaleString('en-IN') : '—'}
+• USD/INR: ₹${usdInr || '—'}
+• FPI Flow: ${fpi ? (parseFloat(fpi) >= 0 ? '+' : '') + parseFloat(fpi).toLocaleString('en-IN') + ' Cr' : '—'}
+
+━━━━━━━━━━━━━━━━━━━━━
+🌍 MACRO NEWS
+━━━━━━━━━━━━━━━━━━━━━
+${macro || 'कोणतेही headline नाही'}
+
+━━━━━━━━━━━━━━━━━━━━━
+📋 TRADE PLAN
+━━━━━━━━━━━━━━━━━━━━━
+${plan || 'कोणताही plan नाही'}
+
+━━━━━━━━━━━━━━━━━━━━━
+🛡 DISCIPLINE REMINDER
+━━━━━━━━━━━━━━━━━━━━━
+⏱ Windows: 8-10 AM | 2-4 PM IST
+📊 Max 100 lots | Spreads only
+🎯 Exit: 60-70% profit
+🚫 NO daily expiry!
+
+⚠️ BTC price broker app वरून verify करा
+━━━━━━━━━━━━━━━━━━━━━`;
+
+  document.getElementById('reportText').textContent = report;
+  document.getElementById('reportOutput').style.display = 'block';
+
+  // Save report
+  state.savedReports.unshift({ text: report, date: dateStr, type });
+  if (state.savedReports.length > 5) state.savedReports = state.savedReports.slice(0,5);
+  saveState();
+  renderSavedReports();
+  showToast('📊 Report ready!');
+}
+
+function copyReport() {
+  const text = document.getElementById('reportText').textContent;
+  navigator.clipboard.writeText(text).then(() => showToast('📋 Copied!')).catch(() => showToast('Manual copy करा'));
+}
+
+function renderSavedReports() {
+  const list = document.getElementById('savedReportsList');
+  if (!state.savedReports.length) {
+    list.innerHTML = '<div style="color:var(--muted);font-size:12px">अजून कोणता report नाही.</div>';
+    return;
+  }
+  list.innerHTML = state.savedReports.map((r,i) => `
+    <div class="alert-item info" style="cursor:pointer;margin-bottom:4px" onclick="viewSavedReport(${i})">
+      📋 ${r.date} — ${r.type === 'morning' ? '🌅 Morning' : '🌙 Evening'}
+    </div>`).join('');
+}
+
+function viewSavedReport(i) {
+  document.getElementById('reportText').textContent = state.savedReports[i].text;
+  document.getElementById('reportOutput').style.display = 'block';
+  document.getElementById('reportOutput').scrollIntoView({behavior:'smooth'});
+}
+
+// ============ WATCHLIST ============
+const WATCHLIST = [
+  { sym:'HFCL', sector:'Telecom', note:'ATH ₹208.98 Jun 2026' },
+  { sym:'WOCKPHARMA', sector:'Pharma', note:'ZAYNICH FDA catalyst' },
+  { sym:'BSE', sector:'Capital Mkt', note:'Exchange infra play' },
+  { sym:'MCX', sector:'Capital Mkt', note:'Commodity exchange' },
+  { sym:'APOLLOMICRO', sector:'Defence', note:'Watch' },
+  { sym:'CGCL', sector:'NBFC', note:'Watch' },
+  { sym:'MODINSU', sector:'Insurance', note:'⚠️ Large loss position' },
+  { sym:'MTARTECH', sector:'Defence', note:'⚠️ Bloom concentration' },
+  { sym:'OMAXAUTO', sector:'Auto', note:'🚨 Unrealized loss' },
+  { sym:'BLISSGVS', sector:'Pharma', note:'PEAD research' },
+  { sym:'SHILPAMED', sector:'Pharma', note:'PEAD research' },
+  { sym:'SANGHVIMOVERS', sector:'Infra', note:'Infrastructure' },
+  { sym:'GEECEE', sector:'Diversified', note:'Unlisted exposure' },
+  { sym:'KALYANKJIL', sector:'Jewellery', note:'Watch' },
+  { sym:'NMDC', sector:'Mining', note:'PSU metal' },
+  { sym:'NEULANDLAB', sector:'Pharma', note:'API pharma' },
+];
+
+function renderWatchlist() {
+  const c = document.getElementById('watchlistContainer');
+  c.innerHTML = WATCHLIST.map(w => {
+    const isWarning = w.note.includes('⚠️') || w.note.includes('🚨');
+    return `<div class="eq-item" style="${isWarning ? 'border-color:#ef444440' : ''}">
+      <div>
+        <div class="eq-symbol">${w.sym}</div>
+        <div class="eq-sector">${w.sector} • ${w.note}</div>
+      </div>
+      <div style="text-align:right">
+        <div class="eq-change" style="color:var(--muted);font-size:11px">Broker verify</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ============ PWA INSTALL ============
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').style.display = 'flex';
+  document.getElementById('topbar').style.marginTop = '44px';
+});
+
+function installPWA() {
+  if (deferredPrompt) {
+    deferredPrompt.prompt();
+    deferredPrompt.userChoice.then(r => {
+      document.getElementById('installBanner').style.display = 'none';
+      document.getElementById('topbar').style.marginTop = '0';
+      deferredPrompt = null;
+    });
+  }
+}
+
+window.addEventListener('appinstalled', () => {
+  document.getElementById('installBanner').style.display = 'none';
+  showToast('✅ App installed! Home screen वर आहे!');
+});
+
+// iOS install hint
+const isIos = /iphone|ipad|ipod/.test(navigator.userAgent.toLowerCase());
+const isStandalone = window.navigator.standalone === true;
+if (isIos && !isStandalone) {
+  const banner = document.getElementById('installBanner');
+  banner.style.display = 'flex';
+  banner.querySelector('div').textContent = '📲 Safari → Share → "Add to Home Screen"';
+  banner.querySelector('button').textContent = 'Got it';
+  banner.querySelector('button').onclick = () => { banner.style.display = 'none'; };
+  document.getElementById('topbar').style.marginTop = '44px';
+}
+
+// ============ SERVICE WORKER ============
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').then(reg => {
+      console.log('SW registered');
+    }).catch(err => console.log('SW failed:', err));
+  });
+}
+
+// ============ TOAST ============
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ============ INIT ============
+loadState();
+updateClock();
+setInterval(updateClock, 30000);
+renderHabits();
+renderTradeLog();
+renderWatchlist();
+renderAlerts();
+renderSavedReports();
+updateTradeCounts();
+
+// Restore whale notes
+if (state.whaleNotes) document.getElementById('whaleNotes').value = state.whaleNotes;
+</script>
+</body>
+</html>
